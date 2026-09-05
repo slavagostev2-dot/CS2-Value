@@ -1,0 +1,87 @@
+{
+  "from": "0.22.6",
+  "version": "0.22.7",
+  "files": [
+    {
+      "path": "src/cs2_value/veto_monitor.py",
+      "sha256": "a793bae44d3be050b95a5f3e794feae1c28be3377af270a618ba1e2f2acf65a2",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.7/files/src/cs2_value/veto_monitor.py"
+    },
+    {
+      "path": "scripts/menu.ps1",
+      "sha256": "1811ed91ea3b13047f1e5cae50e3665372bcd3180b6d30601346439a16ca52cd",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.7/files/scripts/menu.ps1"
+    },
+    {
+      "path": "tests/test_veto_monitor.py",
+      "sha256": "69b0126ad0c708c6f33606386ffd4da8e96871ba23c550d1a184ca8af8da32c1",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.7/files/tests/test_veto_monitor.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "f6b7b72f936348d91e1ca46a78006d8422bb3829dbd31d6d672f85b9ce7dd4a6",
+      "after_sha256": "59f63b69de1e9878bd3aedf2f97758e014c2151922dbe12c13f4ab9dde1534fc",
+      "replacements": [
+        {
+          "old": "0.22.6",
+          "new": "0.22.7",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "08490be74fec1df1610b2ebbfe1c92cd1402139f15b32118f9d452322b77c34e",
+      "after_sha256": "0177264791f4c8005ca1c46786a53b2c57d5eabf200a5b98dbda6636d6e8d787",
+      "replacements": [
+        {
+          "old": "version = \"0.22.6\"",
+          "new": "version = \"0.22.7\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "9a8d8df07af92c12a1222363b6da991cd55c0a8c7bd83ae03250d50cae82363a",
+      "after_sha256": "03e3c29a7142319c48842bfe757a46f6e29e20e8632738092954698f7a58e58b",
+      "replacements": [
+        {
+          "old": "__version__ = \"0.22.6\"",
+          "new": "__version__ = \"0.22.7\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/cli.py",
+      "before_sha256": "fd99d15bb229bddd1aa5b2c741442e22eb32ecbb3df85f2497a24464ed7a79fb",
+      "after_sha256": "787ac6c7397b74667e42f551d80a0d0a6974374937cabb628d98b1ce5709b404",
+      "replacements": [
+        {
+          "old": "from .fonbet_analysis import (\n    analyze_fonbet_event, resolve_fonbet_to_offstage, watch_fonbet_event,\n    FonbetOffstageResolutionError,\n)\n",
+          "new": "from .fonbet_analysis import (\n    analyze_fonbet_event, resolve_fonbet_to_offstage, watch_fonbet_event,\n    FonbetOffstageResolutionError,\n)\nfrom .veto_monitor import capture_visible_veto, watch_veto_fonbet\n",
+          "count": 1
+        },
+        {
+          "old": "    veto_probe.add_argument(\"--offstage-url\", help=\"Optional exact Offstage card if automatic discovery is unavailable\")\n\n    veto_report =",
+          "new": "    veto_probe.add_argument(\"--offstage-url\", help=\"Optional exact Offstage card if automatic discovery is unavailable\")\n\n    veto_watch = sub.add_parser(\"veto-watch-fonbet\", help=\"Automatically watch rendered Offstage veto/picks until shortly after start\")\n    veto_watch.add_argument(\"url\")\n    veto_watch.add_argument(\"--db\", default=\"data/cs2_value.db\")\n    veto_watch.add_argument(\"--interval-seconds\", type=int, default=120)\n    veto_watch.add_argument(\"--stop-after-start-minutes\", type=int, default=15)\n\n    veto_report =",
+          "count": 1
+        },
+        {
+          "old": "        fresh = OffstageAdapter().fetch_match(link.offstage_url)\n        captured_at = datetime.now(timezone.utc).isoformat()\n        with connect(args.db) as conn:\n            match_id = upsert_match(conn, fresh)\n            snapshot_id = insert_veto_snapshot(\n                conn, match_id=match_id, captured_at=captured_at, source=\"offstage\",\n                status_at_capture=fresh.status, actions=fresh.veto,\n            )\n            conn.commit()\n",
+          "new": "        capture = capture_visible_veto(\n            args.db, link, progress=lambda message: print(message, flush=True)\n        )\n        fresh = capture.record\n        captured_at = capture.captured_at\n        snapshot_id = capture.snapshot_id\n",
+          "count": 1
+        },
+        {
+          "old": "        print(\"Важно: v0.22.4 пока только фиксирует реальное veto во времени; оно ещё не меняет вероятность модели.\")\n    elif args.cmd == \"veto-report\":",
+          "new": "        print(f\"Важно: v{__version__} пока только фиксирует реальное veto во времени; оно ещё не меняет вероятность модели.\")\n    elif args.cmd == \"veto-watch-fonbet\":\n        init_db(args.db)\n        print(\"=== VETO/PICK V1: АВТОНАБЛЮДЕНИЕ ===\")\n        print(\"Окно можно остановить Ctrl+C. Одинаковые состояния veto повторно в базу не пишутся.\")\n        watch_veto_fonbet(\n            args.db, args.url, interval_seconds=max(60, args.interval_seconds),\n            stop_after_start_minutes=max(0, args.stop_after_start_minutes),\n            progress=lambda message: print(message, flush=True),\n        )\n    elif args.cmd == \"veto-report\":",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
