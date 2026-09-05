@@ -1,0 +1,73 @@
+{
+  "from": "0.22.7",
+  "version": "0.22.8",
+  "files": [],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "59f63b69de1e9878bd3aedf2f97758e014c2151922dbe12c13f4ab9dde1534fc",
+      "after_sha256": "3d63b5eca524d7a3027eef67d5d3817ab8e3ac8242bcd706de1c6b6f54540c26",
+      "replacements": [
+        {
+          "old": "0.22.7",
+          "new": "0.22.8",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "0177264791f4c8005ca1c46786a53b2c57d5eabf200a5b98dbda6636d6e8d787",
+      "after_sha256": "bdecf003df1c29c0cffc7402b9d63df7ba8ac039258e866390cd97e92ee569fb",
+      "replacements": [
+        {
+          "old": "version = \"0.22.7\"",
+          "new": "version = \"0.22.8\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "03e3c29a7142319c48842bfe757a46f6e29e20e8632738092954698f7a58e58b",
+      "after_sha256": "10ecac3e87edb82da86d6b42f8e5ddacfd94d461468fc6ad9956332d69f02ee2",
+      "replacements": [
+        {
+          "old": "__version__ = \"0.22.7\"",
+          "new": "__version__ = \"0.22.8\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/sources/offstage.py",
+      "before_sha256": "69aa738b0a267ebb3095415d857e0735271ecfe17333b4a5cbf0b809341d9c86",
+      "after_sha256": "943939836616ad848a7950da1eed4741a5f679640056ca590c9269841560e37a",
+      "replacements": [
+        {
+          "old": "played_at = cls._parse_datetime(normalized)",
+          "new": "played_at = cls._parse_datetime(normalized, url)",
+          "count": 1
+        },
+        {
+          "old": "    @staticmethod\n    def _parse_datetime(text: str) -> datetime | None:\n        \"\"\"Parse the match start time, preferring Offstage's explicit start block.\n\n        Detail pages contain many unrelated timestamps (news cards, previous\n        matches, article dates).  The authoritative match timestamp is rendered\n        next to the ``Начало матча`` label, so generic page-wide regexes are only\n        a legacy fallback.  This prevents a same-team current card from being\n        rejected because an unrelated timestamp happened to appear earlier in\n        the page text.\n        \"\"\"\n        months = {\n            \"янв\": 1, \"фев\": 2, \"мар\": 3, \"апр\": 4, \"мая\": 5, \"май\": 5,\n            \"июн\": 6, \"июл\": 7, \"авг\": 8, \"сен\": 9, \"окт\": 10, \"ноя\": 11, \"дек\": 12,\n        }\n\n        def build(hh: str, mm: str, day: str, mon_text: str, year: str) -> datetime | None:\n            month = months.get(mon_text.lower()[:3])\n            if not month:\n                return None\n            try:\n                return datetime(\n                    int(year), month, int(day), int(hh), int(mm),\n                    tzinfo=OffstageAdapter.TIMEZONE,\n                )\n            except ValueError:\n                return None\n\n        # Current/real detail-card shapes observed in Offstage fixtures:\n        #   Начало матча\\n12:08\\n26 авг. 2026\n        #   Начало матча\\n20:45 1 сент. 2026\n        # Keep the search window deliberately short so timestamps from other\n        # page sections cannot leak into the match-start parser.\n        start_block = re.search(\n            r\"Начало\\s+матча(?P<body>.{0,120})\", text, re.I | re.S\n        )\n        if start_block:\n            body = start_block.group(\"body\")\n            m = re.search(\n                r\"(\\d{1,2}):(\\d{2})\\s+(\\d{1,2})\\s+([А-Яа-яЁё]{3,})\\.?\\s+(20\\d{2})\",\n                body, re.I,\n            )\n            if m:\n                parsed = build(*m.groups())\n                if parsed is not None:\n                    return parsed\n\n",
+          "new": "    @staticmethod\n    def _parse_datetime(text: str, url: str | None = None) -> datetime | None:\n        \"\"\"Parse the match start time, preferring Offstage's explicit start block.\n\n        Detail pages contain many unrelated timestamps (news cards, previous\n        matches, article dates).  The authoritative match timestamp is rendered\n        next to the ``Начало матча`` label, so generic page-wide regexes are only\n        a legacy fallback.  This prevents a same-team current card from being\n        rejected because an unrelated timestamp happened to appear earlier in\n        the page text.\n        \"\"\"\n        months = {\n            \"янв\": 1, \"фев\": 2, \"мар\": 3, \"апр\": 4, \"мая\": 5, \"май\": 5,\n            \"июн\": 6, \"июл\": 7, \"авг\": 8, \"сен\": 9, \"окт\": 10, \"ноя\": 11, \"дек\": 12,\n        }\n\n        def build(hh: str, mm: str, day: str, mon_text: str, year: str) -> datetime | None:\n            month = months.get(mon_text.lower()[:3])\n            if not month:\n                return None\n            try:\n                return datetime(\n                    int(year), month, int(day), int(hh), int(mm),\n                    tzinfo=OffstageAdapter.TIMEZONE,\n                )\n            except ValueError:\n                return None\n\n        # Current/real detail-card shapes observed in Offstage fixtures:\n        #   Начало матча\\n12:08\\n26 авг. 2026\n        #   Начало матча\\n20:45 1 сент. 2026\n        # Keep the search window deliberately short so timestamps from other\n        # page sections cannot leak into the match-start parser.\n        start_block = re.search(\n            r\"Начало\\s+матча(?P<body>.{0,120})\", text, re.I | re.S\n        )\n        if start_block:\n            body = start_block.group(\"body\")\n\n            # The rendered current card can use a relative date:\n            #   Начало матча\\n17:00\\nСегодня\n            # while the canonical match URL still carries the absolute date:\n            #   ...-2026-09-05\n            # The time immediately following the label is authoritative.  If an\n            # explicit date is absent, derive only the DATE from the canonical URL\n            # instead of falling through to unrelated news timestamps on the page.\n            time_at_start = re.match(r\"\\s*(\\d{1,2}):(\\d{2})\\b\", body)\n            if time_at_start:\n                hh, mm = time_at_start.groups()\n                remainder = body[time_at_start.end():]\n                explicit_date = re.search(\n                    r\"(\\d{1,2})\\s+([А-Яа-яЁё]{3,})\\.?\\s+(20\\d{2})\",\n                    remainder, re.I,\n                )\n                if explicit_date:\n                    day, mon_text, year = explicit_date.groups()\n                    parsed = build(hh, mm, day, mon_text, year)\n                    if parsed is not None:\n                        return parsed\n\n                if url:\n                    slug = urlparse(url).path.rstrip(\"/\").rsplit(\"/\", 1)[-1]\n                    url_date = re.search(r\"(20\\d{2})-(\\d{2})-(\\d{2})$\", slug)\n                    if url_date:\n                        year, month, day = map(int, url_date.groups())\n                        try:\n                            return datetime(\n                                year, month, day, int(hh), int(mm),\n                                tzinfo=OffstageAdapter.TIMEZONE,\n                            )\n                        except ValueError:\n                            pass\n\n            # Older pages can still have time and absolute date on one line, with\n            # some harmless text before the time. Keep that observed shape too.\n            m = re.search(\n                r\"(\\d{1,2}):(\\d{2})\\s+(\\d{1,2})\\s+([А-Яа-яЁё]{3,})\\.?\\s+(20\\d{2})\",\n                body, re.I,\n            )\n            if m:\n                parsed = build(*m.groups())\n                if parsed is not None:\n                    return parsed\n\n",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "tests/test_offstage_parser.py",
+      "before_sha256": "3637878e76e1bcc860f5edb44c7c3f42a4c9af013a6b8a166451d6bb2ed0195f",
+      "after_sha256": "1c23f4d4e736470155698c2328f83a65e26aada66e582dfde9141a51e233c677",
+      "replacements": [
+        {
+          "old": "def test_match_start_block_supports_single_line_shape():\n    text = \"\"\"\\nМатч ASTRAL vs Bebop\\n5 сент. 2026\\nbo3\\nНачало матча\\n20:45 5 сент. 2026\\nТурнир Example Cup\\n\"\"\"\n    record = OffstageAdapter.parse_visible_text(\n        text, \"https://www.offstage.ru/cs2/matches/astral-vs-bebop-test\"\n    )\n    assert record.played_at is not None\n    assert (record.played_at.hour, record.played_at.minute) == (20, 45)\n",
+          "new": "def test_match_start_block_supports_single_line_shape():\n    text = \"\"\"\\nМатч ASTRAL vs Bebop\\n5 сент. 2026\\nbo3\\nНачало матча\\n20:45 5 сент. 2026\\nТурнир Example Cup\\n\"\"\"\n    record = OffstageAdapter.parse_visible_text(\n        text, \"https://www.offstage.ru/cs2/matches/astral-vs-bebop-test\"\n    )\n    assert record.played_at is not None\n    assert (record.played_at.hour, record.played_at.minute) == (20, 45)\n\n\ndef test_match_start_block_uses_url_date_when_card_says_today():\n    text = \"\"\"\nМатч Team Spirit vs Team Falcons\nСегодня\nbo3\nНачало матча\n17:00\nСегодня\nДисциплина CS2\nТурнир BLAST Premier Open Porto 2026\nСтатус матча Не начался\nНовости\n13:27\n5 сент. 2026 г.\n\"\"\"\n    record = OffstageAdapter.parse_visible_text(\n        text,\n        \"https://www.offstage.ru/cs2/matches/team-spirit-2-vs-team-falcons-2026-09-05\",\n    )\n    assert record.played_at is not None\n    assert (record.played_at.year, record.played_at.month, record.played_at.day) == (2026, 9, 5)\n    assert (record.played_at.hour, record.played_at.minute) == (17, 0)\n    assert record.played_at.utcoffset().total_seconds() == 3 * 3600\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
