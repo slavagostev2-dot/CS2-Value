@@ -1,0 +1,66 @@
+{
+  "from": "0.22.12",
+  "version": "0.22.13",
+  "files": [],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "474cd264db4da47d42d2cbe5fd6f3058c1dde541c547d7a5ad9688385166035d",
+      "after_sha256": "f6d79c16bc3130b21a5e199daa0d47e328464fa575f085278b8adb70fbe6eaef",
+      "replacements": [
+        {"old": "0.22.12", "new": "0.22.13", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "29fdb0b6a3ba9e8b699e91502383a592ff6dee1904ed4b7fdca8c2c9be1137ae",
+      "after_sha256": "6b545354cb1152b09526c183debd5883f996979cf555a155aa3eded98e91e4d4",
+      "replacements": [
+        {"old": "version = \"0.22.12\"", "new": "version = \"0.22.13\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "79bfb42b1d30cb0620a299742b674977e0393dc6e6e2e27cab3751bc0faa1dba",
+      "after_sha256": "54070698a77149819b8f293459fca8191f971e63c8561467aeef542c95554d78",
+      "replacements": [
+        {"old": "__version__ = \"0.22.12\"", "new": "__version__ = \"0.22.13\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_dom_veto.py",
+      "before_sha256": "59fc8987696b71d6933d2c821a6466b2d9d46ceedabc6b8ec0d6d358b911bf0e",
+      "after_sha256": "3e4ea80a755c47e78d8b59423c36eefffa77fe403c74afe2c12135ae33cb9748",
+      "replacements": [
+        {
+          "old": "from dataclasses import replace\n",
+          "new": "from dataclasses import replace\nfrom hashlib import sha1\n",
+          "count": 1
+        },
+        {
+          "old": "def extract_veto_from_scoreboard_dom(\n    page,\n    team_a: str,\n    team_b: str,\n    best_of: int | None,\n) -> tuple[VetoAction, ...]:\n",
+          "new": "def extract_veto_from_scoreboard_dom(\n    page,\n    team_a: str,\n    team_b: str,\n    best_of: int | None,\n    *,\n    debug=None,\n) -> tuple[VetoAction, ...]:\n",
+          "count": 1
+        },
+        {
+          "old": "    if not isinstance(payload, dict):\n        return ()\n    return veto_from_dom_payload(payload, team_a, team_b, best_of)\n",
+          "new": "    if not isinstance(payload, dict):\n        if debug:\n            debug(\"DOM debug: payload не получен.\")\n        return ()\n    result = veto_from_dom_payload(payload, team_a, team_b, best_of)\n    if not result and debug:\n        team_assets = payload.get(\"team_assets\") or {}\n        assets_a = set(team_assets.get(\"a\") or ())\n        assets_b = set(team_assets.get(\"b\") or ())\n        debug(f\"DOM debug: {team_a} assets={len(assets_a)}, {team_b} assets={len(assets_b)}\")\n        best = {}\n        for item in payload.get(\"maps\") or ():\n            name = str(item.get(\"map\") or \"\").strip()\n            score = int(item.get(\"score\") or 0)\n            current = best.get(name.casefold())\n            if current is None or score > int(current.get(\"score\") or 0):\n                best[name.casefold()] = item\n        for item in sorted(best.values(), key=lambda x: int(x.get(\"order\") or 0)):\n            assets = set(item.get(\"assets\") or ())\n            samples = []\n            for asset in list(assets)[:2]:\n                text = str(asset)\n                if text.startswith(\"svgpath:\"):\n                    text = \"svgpath:#\" + sha1(text.encode(\"utf-8\")).hexdigest()[:10]\n                elif len(text) > 90:\n                    text = text[:42] + \"...\" + text[-42:]\n                samples.append(text)\n            debug(\n                f\"  DOM map {item.get('map')}: assets={len(assets)}, \"\n                f\"A-intersection={len(assets & assets_a)}, B-intersection={len(assets & assets_b)}, \"\n                f\"sample={', '.join(samples) if samples else '-'}\"\n            )\n    return result\n",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "1fe7047a69103475f2df3a2a8c4f695b0c4f3c19e642f02b191b334f0d9b1400",
+      "after_sha256": "c29966c167c3e65479a3ef21313575083e9f8f8c2dd667386d94348d83de48f5",
+      "replacements": [
+        {
+          "old": "                dom_veto = extract_veto_from_scoreboard_dom(\n                    page, record.team_a, record.team_b, record.best_of\n                )\n",
+          "new": "                dom_veto = extract_veto_from_scoreboard_dom(\n                    page, record.team_a, record.team_b, record.best_of, debug=progress\n                )\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
