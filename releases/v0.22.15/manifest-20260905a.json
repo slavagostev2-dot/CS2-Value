@@ -1,0 +1,43 @@
+{
+  "from": "0.22.14",
+  "version": "0.22.15",
+  "files": [
+    {
+      "path": "src/cs2_value/offstage_dom_veto.py",
+      "sha256": "e7a175d8f163881697e0afba587170cc30832a3db9bebda78fe82a53436571c4",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.15/files/src/cs2_value/offstage_dom_veto.py"
+    },
+    {
+      "path": "tests/test_offstage_dom_veto.py",
+      "sha256": "931f9139e7032f25a249c3112433a535de7751059831e8155fbb71d46b17f25d",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.15/files/tests/test_offstage_dom_veto.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "eb17eb3d3fdbf40cc001f8415f21476be284c96047240f3d9917eeaa2a636472",
+      "after_sha256": "9544ced7666710623f8a4789090117565559848245609a88b3ba795a8d87233d",
+      "replacements": [
+        {"old": "0.22.14", "new": "0.22.15", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "c3e3af45d2d841fb8238d068f90a0a2cf2f6a19bda6f70ab1c4f2c7826d50a76",
+      "after_sha256": "eb9cb1f6e288e9f0ab5824df2eb9328211f3cf70dde36b5861239d3b6059be47",
+      "replacements": [
+        {"old": "version = \"0.22.14\"", "new": "version = \"0.22.15\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "8f275afdca9265bc1ec56b770131a5ec3b850393f21fe903417ef2baee15e119",
+      "after_sha256": "8342c967d63f11c96333739f44d584bc9972fbbf1ce98dc994da43c3dcc423c8",
+      "replacements": [
+        {"old": "__version__ = \"0.22.14\"", "new": "__version__ = \"0.22.15\"", "count": 1}
+      ]
+    }
+  ]
+}
