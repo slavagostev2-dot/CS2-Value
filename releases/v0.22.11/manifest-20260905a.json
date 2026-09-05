@@ -1,0 +1,60 @@
+{
+  "from": "0.22.10",
+  "version": "0.22.11",
+  "files": [
+    {
+      "path": "tests/test_fonbet_live_url.py",
+      "sha256": "dafda42f4cd28eb45f79ef7960fea4754c139ad7726f6a46815c372bf426c775",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.11/files/tests/test_fonbet_live_url.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "5aaf485a9cee2780abbc59b1b14922df31ba20239a592d33612389de61111aea",
+      "after_sha256": "20b1399fa39200e7c2f6fb4d1faa4d65a5b14efcf9b44cb7d9f837bfb2d2c149",
+      "replacements": [
+        {"old": "0.22.10", "new": "0.22.11", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "69a3f4961a681f196ea32b1c53546c0b91d1afb54b8d91edf5e64e6f4cfbdd12",
+      "after_sha256": "5018b22c1ca72919753bd9affda9f8e3025cbd95ccf542aa47c6a36db369924f",
+      "replacements": [
+        {"old": "version = \"0.22.10\"", "new": "version = \"0.22.11\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "f377f73f1c61edb6e1ad5beec373f68a0fa0255f30563fdfd534706dca8008c2",
+      "after_sha256": "1d9d8de6667436a9be0bbd951d892750f9d8aaf27268f0cbfd4a2b749018f155",
+      "replacements": [
+        {"old": "__version__ = \"0.22.10\"", "new": "__version__ = \"0.22.11\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/bookmakers/fonbet.py",
+      "before_sha256": "b4c67809c7f6f569cedc7a6a59585a4c7f9a77c0e850f643cdbcb96a3d17b449",
+      "after_sha256": "d42f1ac6ef8253c9637c2c68c9499c07d23d7fd52cef58a762aa2ef435ed148f",
+      "replacements": [
+        {
+          "old": "    COMPACT_PATH_RE = re.compile(\n        r\"^/sports/esports/(?P<tournament>\\d+)/(?P<event>\\d+)/?$\",\n        re.I,\n    )\n",
+          "new": "    COMPACT_PATH_RE = re.compile(\n        r\"^/sports/esports/(?P<tournament>\\d+)/(?P<event>\\d+)/?$\",\n        re.I,\n    )\n    # Live esports deep-link used by Fonbet while a match is in progress:\n    # /live/esports/81305/67730260\n    LIVE_PATH_RE = re.compile(\n        r\"^/live/esports/(?P<tournament>\\d+)/(?P<event>\\d+)/?$\",\n        re.I,\n    )\n    # Some Fonbet live pages may retain the category/cs segment.\n    LIVE_CATEGORY_PATH_RE = re.compile(\n        r\"^/live/esports/category/cs/(?P<tournament>\\d+)/(?P<event>\\d+)/?$\",\n        re.I,\n    )\n",
+          "count": 1
+        },
+        {
+          "old": "    def parse_event_url(cls, url: str) -> FonbetEventRef:\n        parsed = urlparse(url)\n",
+          "new": "    def parse_event_url(cls, url: str) -> FonbetEventRef:\n        url = url.strip()\n        parsed = urlparse(url)\n",
+          "count": 1
+        },
+        {
+          "old": "        match = cls.CATEGORY_PATH_RE.match(parsed.path) or cls.COMPACT_PATH_RE.match(parsed.path)\n",
+          "new": "        match = (\n            cls.CATEGORY_PATH_RE.match(parsed.path)\n            or cls.COMPACT_PATH_RE.match(parsed.path)\n            or cls.LIVE_PATH_RE.match(parsed.path)\n            or cls.LIVE_CATEGORY_PATH_RE.match(parsed.path)\n        )\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
