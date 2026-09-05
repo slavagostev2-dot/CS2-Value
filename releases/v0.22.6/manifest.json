@@ -1,0 +1,73 @@
+{
+  "from": "0.22.5",
+  "version": "0.22.6",
+  "files": [],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "d7fd8f6bb23a6e7015adcc63ae2a69e0592831ec872d095dc7cb82ee5d8c8b14",
+      "after_sha256": "f6b7b72f936348d91e1ca46a78006d8422bb3829dbd31d6d672f85b9ce7dd4a6",
+      "replacements": [
+        {"old": "0.22.5", "new": "0.22.6", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "c862eaf33e50459a2a7bbf3e399a8091fffaa112102682b09b59a34f5e7bd14f",
+      "after_sha256": "08490be74fec1df1610b2ebbfe1c92cd1402139f15b32118f9d452322b77c34e",
+      "replacements": [
+        {"old": "version = \"0.22.5\"", "new": "version = \"0.22.6\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "4a56b709c71ece259b81a264802a215ac3213f344c238ef5dd77a3da0bad1bf9",
+      "after_sha256": "9a8d8df07af92c12a1222363b6da991cd55c0a8c7bd83ae03250d50cae82363a",
+      "replacements": [
+        {"old": "__version__ = \"0.22.5\"", "new": "__version__ = \"0.22.6\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "3184fc39014b965c0510f9c3b7c1b608ff789909d6889cc35a328022dc81ec96",
+      "after_sha256": "ab47ec96cb890fdc2bb9335b13fc595dbf1651b32c2992b276989a23bcdd7505",
+      "replacements": [
+        {
+          "old": "from __future__ import annotations\n\nfrom urllib.parse import urljoin, urlparse\n",
+          "new": "from __future__ import annotations\n\nimport re\nfrom urllib.parse import urljoin, urlparse\n",
+          "count": 1
+        },
+        {
+          "old": "                # Current match cards can appear after a delayed client-side fetch.\n                # Scroll a little and give the page another chance; never switch to\n                # the Finished tab because that could select an old same-team match.\n                try:\n                    page.mouse.wheel(0, 4_000)\n                    page.evaluate(\n                        \"window.scrollTo({top: Math.min(document.body.scrollHeight, window.scrollY + 4000), behavior: 'instant'})\"\n                    )\n                except Exception:\n                    pass\n                if round_no + 1 < max_rounds:\n                    page.wait_for_timeout(1_000)\n            return []\n        finally:\n            browser.close()\n",
+          "new": "                # Current match cards can appear after a delayed client-side fetch.\n                # Scroll a little and give the page another chance; never switch to\n                # the Finished tab because that could select an old same-team match.\n                try:\n                    page.mouse.wheel(0, 4_000)\n                    page.evaluate(\n                        \"window.scrollTo({top: Math.min(document.body.scrollHeight, window.scrollY + 4000), behavior: 'instant'})\"\n                    )\n                except Exception:\n                    pass\n                if round_no + 1 < max_rounds:\n                    page.wait_for_timeout(1_000)\n            return []\n        finally:\n            browser.close()\n\n\n\ndef fetch_match_with_browser(\n    url: str,\n    *,\n    timeout_ms: int = 20_000,\n    settle_ms: int = 1_500,\n    max_wait_rounds: int = 6,\n    progress: Callable[[str], None] | None = None,\n):\n    \"\"\"Fetch and parse one JS-rendered Offstage match detail card.\n\n    Current/scheduled Offstage detail pages can expose stale or incomplete text to\n    plain HTTP while the authoritative start block and veto are rendered in the\n    browser.  Matching discovered through the browser must therefore validate the\n    same rendered detail card instead of falling back to ``httpx`` for the final\n    identity/time check.\n    \"\"\"\n    try:\n        from playwright.sync_api import sync_playwright\n    except ImportError as exc:\n        raise OffstageBrowserError(\n            \"Browser detail fetch needs Playwright. Install the browser extra with: \"\n            'python -m pip install -e \".[dev,model,browser]\"'\n        ) from exc\n\n    if progress:\n        progress(\"Открываю найденную карточку Offstage в браузере...\")\n\n    with sync_playwright() as pw:\n        browser = None\n        launch_errors: list[str] = []\n        for kwargs in (\n            {\"channel\": \"chrome\", \"headless\": True},\n            {\"headless\": True},\n        ):\n            try:\n                browser = pw.chromium.launch(**kwargs)\n                break\n            except Exception as exc:  # pragma: no cover - local browser dependent\n                launch_errors.append(f\"{type(exc).__name__}: {exc}\")\n        if browser is None:\n            raise OffstageBrowserError(\n                \"Could not start Chrome/Chromium for Offstage detail validation. \"\n                \"Details: \" + \" | \".join(launch_errors)\n            )\n\n        try:\n            page = browser.new_page(\n                locale=\"ru-RU\",\n                user_agent=(\n                    \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) \"\n                    \"AppleWebKit/537.36 (KHTML, like Gecko) \"\n                    \"Chrome/152.0.0.0 Safari/537.36\"\n                ),\n            )\n            page.goto(url, wait_until=\"domcontentloaded\", timeout=timeout_ms)\n            page.wait_for_timeout(settle_ms)\n\n            text = \"\"\n            for round_no in range(max(1, max_wait_rounds)):\n                try:\n                    text = page.locator(\"body\").inner_text(timeout=5_000)\n                except Exception:\n                    text = \"\"\n                # The title proves the match card rendered; the explicit start label\n                # is the key field that was absent from the static HTTP page in the\n                # real 391-minute mismatch case.\n                if re.search(r\"Матч\\s+.+?\\s+vs\\s+.+\", text, re.I) and re.search(\n                    r\"Начало\\s+матча\", text, re.I\n                ):\n                    break\n                if round_no + 1 < max_wait_rounds:\n                    page.wait_for_timeout(750)\n\n            if not text.strip():\n                raise OffstageBrowserError(\"Rendered Offstage detail page returned no visible text.\")\n            record = OffstageAdapter.parse_visible_text(text, url)\n            if progress:\n                start = record.played_at.isoformat() if record.played_at is not None else \"не найдено\"\n                progress(f\"Отрисованная карточка Offstage: начало {start}\")\n            return record\n        finally:\n            browser.close()\n",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/fonbet_analysis.py",
+      "before_sha256": "cea1b929f2cae99f6fecf153b6cc3f99306dfe74f398b18c8a6f20c076233d70",
+      "after_sha256": "2bb3b2063ced684c7984926a4636e303359a594dffd4df5730c09dc68490db48",
+      "replacements": [
+        {"old": "from .offstage_browser import OffstageBrowserError, find_match_urls_for_teams_with_browser\n", "new": "from .offstage_browser import (\n    OffstageBrowserError,\n    fetch_match_with_browser,\n    find_match_urls_for_teams_with_browser,\n)\n", "count": 1},
+        {"old": "    start_utc: datetime | None,\n    max_time_difference_seconds: float,\n):\n    candidates: list[tuple[int, float | None, bool, object]] = []\n    rejected_time: list[float] = []\n    for url in dict.fromkeys(urls):\n        record = offstage.fetch_match(url)\n", "new": "    start_utc: datetime | None,\n    max_time_difference_seconds: float,\n    record_fetcher=None,\n):\n    candidates: list[tuple[int, float | None, bool, object]] = []\n    rejected_time: list[float] = []\n    fetch_record = record_fetcher or offstage.fetch_match\n    for url in dict.fromkeys(urls):\n        record = fetch_record(url)\n", "count": 1},
+        {"old": "    max_time_difference_seconds: float = 6 * 3600,\n    progress=None,\n) -> tuple[FonbetOffstageLink, FonbetOddsSnapshot]:\n", "new": "    max_time_difference_seconds: float = 6 * 3600,\n    progress=None,\n    browser_detail_fetcher=None,\n) -> tuple[FonbetOffstageLink, FonbetOddsSnapshot]:\n", "count": 1},
+        {"old": "    init_db(db_path)\n    fonbet = fonbet or FonbetAdapter()\n", "new": "    init_db(db_path)\n    offstage_was_injected = offstage is not None\n    fonbet = fonbet or FonbetAdapter()\n", "count": 1},
+        {"old": "        browser_candidates, browser_rejected = _validated_offstage_candidates(\n            browser_urls, snap=snap, offstage=offstage,\n            start_utc=start_utc,\n            max_time_difference_seconds=max_time_difference_seconds,\n        )\n        candidates = browser_candidates\n        rejected_time.extend(browser_rejected)\n", "new": "        try:\n            if browser_detail_fetcher is not None:\n                rendered_fetch = browser_detail_fetcher\n            elif offstage_was_injected:\n                # Dependency-injected adapters (tests/custom sources) own their\n                # detail-fetch semantics. Production Offstage uses Playwright.\n                rendered_fetch = offstage.fetch_match\n            else:\n                rendered_fetch = lambda url: fetch_match_with_browser(url, progress=progress)\n            browser_candidates, browser_rejected = _validated_offstage_candidates(\n                browser_urls, snap=snap, offstage=offstage,\n                start_utc=start_utc,\n                max_time_difference_seconds=max_time_difference_seconds,\n                record_fetcher=rendered_fetch,\n            )\n            candidates = browser_candidates\n            rejected_time.extend(browser_rejected)\n        except OffstageBrowserError as exc:\n            browser_error = str(exc)\n            candidates = []\n", "count": 1}
+      ]
+    },
+    {
+      "path": "tests/test_fonbet_analysis.py",
+      "before_sha256": "e7c94878b4ce501eb9bbffa487902ba06baec58b2f544644da940f29edecd967",
+      "after_sha256": "442decf23ef1de9c10975472faaf3d6c2464a8b9982cb74d95eccfe47ed4e48c",
+      "replacements": [
+        {
+          "old": "    second, _ = resolve_fonbet_to_offstage(\n        db, URL, fonbet=FakeFonbet(), offstage=NoListingOffstage()\n    )\n    assert second.offstage_url == first.offstage_url\n",
+          "new": "    second, _ = resolve_fonbet_to_offstage(\n        db, URL, fonbet=FakeFonbet(), offstage=NoListingOffstage()\n    )\n    assert second.offstage_url == first.offstage_url\n\n\n\ndef test_browser_discovered_candidate_is_validated_from_rendered_detail_not_static_http(monkeypatch, tmp_path):\n    \"\"\"Regression for the real 391-minute mismatch on Fonbet event 67802678.\n\n    Static detail HTML can miss the JS-rendered ``Начало матча`` block and parse an\n    unrelated 23:31 timestamp.  Once the listing candidate came from Playwright,\n    its final time/identity validation must also use the rendered detail card.\n    \"\"\"\n    db = tmp_path / \"browser-rendered-detail.db\"\n    current_url = \"https://www.offstage.ru/cs2/matches/team-spirit-vs-team-falcons-2026-09-05\"\n    snap = FonbetOddsSnapshot(\n        ref=FonbetEventRef(\n            url=\"https://fon.bet/sports/esports/140001/67802678\",\n            tournament_id=\"140001\",\n            event_id=\"67802678\",\n        ),\n        team_a=\"Team Spirit\",\n        team_b=\"Team Falcons\",\n        odds_a=1.70,\n        odds_b=2.10,\n        blocked_a=False,\n        blocked_b=False,\n        start_time=1788616800,  # 2026-09-05 14:00 UTC = 17:00 Europe/Moscow\n        raw_status=\"line\",\n        packet_version=1,\n    )\n    wrong_static = MatchRecord(\n        source=\"offstage\", source_url=current_url,\n        source_match_key=current_url.rsplit(\"/\", 1)[-1],\n        played_at=datetime(2026, 9, 5, 23, 31, tzinfo=ZoneInfo(\"Europe/Moscow\")),\n        team_a=\"Team Spirit\", team_b=\"Team Falcons\", best_of=3,\n        tournament=\"BLAST Premier Open Porto 2026\", status=\"scheduled\",\n    )\n    correct_rendered = MatchRecord(\n        source=\"offstage\", source_url=current_url,\n        source_match_key=current_url.rsplit(\"/\", 1)[-1],\n        played_at=datetime(2026, 9, 5, 17, 0, tzinfo=ZoneInfo(\"Europe/Moscow\")),\n        team_a=\"Team Spirit\", team_b=\"Team Falcons\", best_of=3,\n        tournament=\"BLAST Premier Open Porto 2026\", status=\"scheduled\",\n    )\n\n    class SpiritFonbet:\n        def fetch_odds(self, url):\n            assert url == snap.ref.url\n            return snap\n\n    class StaticIncompleteOffstage:\n        def fetch_html(self, url):\n            return f\"<a href='{current_url}'>Team Spirit Team Falcons</a>\"\n        def find_match_urls_for_teams(self, html, team_a, team_b, base_url=None):\n            return OffstageAdapter.find_match_urls_for_teams(html, team_a, team_b, base_url)\n        def fetch_match(self, url):\n            assert url == current_url\n            return wrong_static\n\n    monkeypatch.setattr(\n        \"cs2_value.fonbet_analysis.find_match_urls_for_teams_with_browser\",\n        lambda *a, **k: [current_url],\n    )\n    rendered_calls = []\n    def fake_rendered(url, progress=None):\n        rendered_calls.append(url)\n        return correct_rendered\n    monkeypatch.setattr(\"cs2_value.fonbet_analysis.fetch_match_with_browser\", fake_rendered)\n\n    link, _ = resolve_fonbet_to_offstage(\n        db, snap.ref.url, fonbet=SpiritFonbet(), offstage=StaticIncompleteOffstage(),\n        browser_detail_fetcher=fake_rendered,\n    )\n    assert rendered_calls == [current_url]\n    assert link.offstage_url == current_url\n    assert link.time_difference_seconds == pytest.approx(0.0)\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
