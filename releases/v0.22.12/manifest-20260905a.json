@@ -1,0 +1,60 @@
+{
+  "from": "0.22.11",
+  "version": "0.22.12",
+  "files": [
+    {
+      "path": "src/cs2_value/offstage_dom_veto.py",
+      "sha256": "59fc8987696b71d6933d2c821a6466b2d9d46ceedabc6b8ec0d6d358b911bf0e",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.12/files/src/cs2_value/offstage_dom_veto.py"
+    },
+    {
+      "path": "tests/test_offstage_dom_veto.py",
+      "sha256": "498089e8988ddfd28ce0d17050405406d7863ad1ab042ba4f35af5f4ea05db9d",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.12/files/tests/test_offstage_dom_veto.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "20b1399fa39200e7c2f6fb4d1faa4d65a5b14efcf9b44cb7d9f837bfb2d2c149",
+      "after_sha256": "474cd264db4da47d42d2cbe5fd6f3058c1dde541c547d7a5ad9688385166035d",
+      "replacements": [
+        {"old": "0.22.11", "new": "0.22.12", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "5018b22c1ca72919753bd9affda9f8e3025cbd95ccf542aa47c6a36db369924f",
+      "after_sha256": "29fdb0b6a3ba9e8b699e91502383a592ff6dee1904ed4b7fdca8c2c9be1137ae",
+      "replacements": [
+        {"old": "version = \"0.22.11\"", "new": "version = \"0.22.12\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "1d9d8de6667436a9be0bbd951d892750f9d8aaf27268f0cbfd4a2b749018f155",
+      "after_sha256": "79bfb42b1d30cb0620a299742b674977e0393dc6e6e2e27cab3751bc0faa1dba",
+      "replacements": [
+        {"old": "__version__ = \"0.22.11\"", "new": "__version__ = \"0.22.12\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "165817e47dea1239d73f7b38632f437257a0048689240337d6a04700df7d1119",
+      "after_sha256": "1fe7047a69103475f2df3a2a8c4f695b0c4f3c19e642f02b191b334f0d9b1400",
+      "replacements": [
+        {
+          "old": "from .offstage_dom_veto import extract_veto_from_scoreboard_dom\n",
+          "new": "from .offstage_dom_veto import extract_veto_from_scoreboard_dom, merge_dom_veto_with_text\n",
+          "count": 1
+        },
+        {
+          "old": "            if dom_veto and not record.veto:\n                record = replace(record, veto=dom_veto)\n                if progress:\n                    progress(\n                        \"DOM scoreboard Offstage: \"\n                        + \", \".join(\n                            f\"{action.map_name}={action.action}\"\n                            + (f\"({action.team_name})\" if action.team_name else \"\")\n                            for action in dom_veto\n                        )\n                    )\n",
+          "new": "            if dom_veto:\n                merged_veto = merge_dom_veto_with_text(dom_veto, record.veto)\n                record = replace(record, veto=merged_veto)\n                if progress:\n                    progress(\n                        \"DOM scoreboard Offstage: \"\n                        + \", \".join(\n                            f\"{action.map_name}={action.action}\"\n                            + (f\"({action.team_name})\" if action.team_name else \"\")\n                            for action in dom_veto\n                        )\n                    )\n            elif progress and record.veto:\n                progress(\"DOM scoreboard Offstage: владельцы PICK пока не определены; использую текстовый map pool.\")\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
