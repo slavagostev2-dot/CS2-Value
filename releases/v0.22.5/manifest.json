@@ -1,0 +1,28 @@
+{
+  "from": "0.22.4",
+  "version": "0.22.5",
+  "files": [
+    {
+      "path": "VERSION.txt",
+      "sha256": "d7fd8f6bb23a6e7015adcc63ae2a69e0592831ec872d095dc7cb82ee5d8c8b14",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.5/files/VERSION.txt"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "c862eaf33e50459a2a7bbf3e399a8091fffaa112102682b09b59a34f5e7bd14f",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.5/files/pyproject.toml"
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "sha256": "4a56b709c71ece259b81a264802a215ac3213f344c238ef5dd77a3da0bad1bf9",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.5/files/src/cs2_value/__init__.py"
+    },
+    {
+      "path": "scripts/github_update.ps1",
+      "sha256": "4f9589d2020a9172f2a114a24c7b69d6bcfeb57ccda57dad8444852cb7a7b90e",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.5/files/scripts/github_update.ps1"
+    }
+  ],
+  "delete": [],
+  "patches": []
+}
