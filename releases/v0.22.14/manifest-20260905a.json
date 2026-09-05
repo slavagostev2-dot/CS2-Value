@@ -1,0 +1,89 @@
+{
+  "from": "0.22.13",
+  "version": "0.22.14",
+  "files": [
+    {
+      "path": "tests/test_offstage_dom_veto.py",
+      "sha256": "3591950167fa836ed17631ca0b03cb714acfa114dd67f552f073c03436803f19",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.14/files/tests/test_offstage_dom_veto.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "f6d79c16bc3130b21a5e199daa0d47e328464fa575f085278b8adb70fbe6eaef",
+      "after_sha256": "eb17eb3d3fdbf40cc001f8415f21476be284c96047240f3d9917eeaa2a636472",
+      "replacements": [
+        {
+          "old": "0.22.13",
+          "new": "0.22.14",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "6b545354cb1152b09526c183debd5883f996979cf555a155aa3eded98e91e4d4",
+      "after_sha256": "c3e3af45d2d841fb8238d068f90a0a2cf2f6a19bda6f70ab1c4f2c7826d50a76",
+      "replacements": [
+        {
+          "old": "version = \"0.22.13\"",
+          "new": "version = \"0.22.14\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "54070698a77149819b8f293459fca8191f971e63c8561467aeef542c95554d78",
+      "after_sha256": "8f275afdca9265bc1ec56b770131a5ec3b850393f21fe903417ef2baee15e119",
+      "replacements": [
+        {
+          "old": "__version__ = \"0.22.13\"",
+          "new": "__version__ = \"0.22.14\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_dom_veto.py",
+      "before_sha256": "3e4ea80a755c47e78d8b59423c36eefffa77fe403c74afe2c12135ae33cb9748",
+      "after_sha256": "ec25319446a55e483ed206a049f676fc17fb920b92bce0c6fffc2c6797f8d9e9",
+      "replacements": [
+        {
+          "old": "def veto_from_dom_payload(\n    payload: dict,\n    team_a: str,\n    team_b: str,\n    best_of: int | None,\n) -> tuple[VetoAction, ...]:",
+          "new": "def veto_from_dom_payload(\n    payload: dict,\n    team_a: str,\n    team_b: str,\n    best_of: int | None,\n    *,\n    text_veto: tuple[VetoAction, ...] = (),\n) -> tuple[VetoAction, ...]:",
+          "count": 1
+        },
+        {
+          "old": "        picked.append((str(item[\"map\"]), owner))\n\n    # BO3: two team picks + one ownerless decider. BO5 follows the same rule.\n",
+          "new": "        picked.append((str(item[\"map\"]), owner))\n\n    # Real live fallback: the visible-text parser can already establish which\n    # BO3 rows are PICK/PICK/DECIDER even when one picker logo is rendered with\n    # a different SVG representation. If exactly one picker is directly tied to\n    # a team asset, the other PICK belongs to the opposite team. This structural\n    # complement is safe for standard BO3 and is deliberately disabled for BO5.\n    if best_of == 3 and text_veto:\n        series_text = sorted(\n            (\n                action for action in text_veto\n                if action.action in {\"pick\", \"decider\"}\n                and action.series_map_order is not None\n            ),\n            key=lambda action: int(action.series_map_order or 0),\n        )\n        if (\n            len(series_text) == 3\n            and [action.series_map_order for action in series_text] == [1, 2, 3]\n            and sum(action.action == \"pick\" for action in series_text) == 2\n            and sum(action.action == \"decider\" for action in series_text) == 1\n        ):\n            direct_owner = {map_name.casefold(): owner for map_name, owner in picked}\n            pick_rows = [action for action in series_text if action.action == \"pick\"]\n            resolved = [direct_owner.get(action.map_name.casefold()) for action in pick_rows]\n            if resolved.count(team_a) == 1 and resolved.count(team_b) == 0 and resolved.count(None) == 1:\n                resolved[resolved.index(None)] = team_b\n            elif resolved.count(team_b) == 1 and resolved.count(team_a) == 0 and resolved.count(None) == 1:\n                resolved[resolved.index(None)] = team_a\n            if resolved.count(team_a) == 1 and resolved.count(team_b) == 1:\n                owner_for = {\n                    pick_rows[0].map_name.casefold(): resolved[0],\n                    pick_rows[1].map_name.casefold(): resolved[1],\n                }\n                return tuple(\n                    VetoAction(\n                        map_name=action.map_name,\n                        action=action.action,\n                        team_name=(\n                            None if action.action == \"decider\"\n                            else owner_for.get(action.map_name.casefold())\n                        ),\n                        action_order=index + 1,\n                        series_map_order=index + 1,\n                    )\n                    for index, action in enumerate(series_text)\n                )\n\n    # BO3: two team picks + one ownerless decider. BO5 follows the same rule.\n",
+          "count": 1
+        },
+        {
+          "old": "    *,\n    debug=None,\n) -> tuple[VetoAction, ...]:\n    \"\"\"Read team-logo ownership from the rendered Offstage map tabs.\"\"\"",
+          "new": "    *,\n    text_veto: tuple[VetoAction, ...] = (),\n    debug=None,\n) -> tuple[VetoAction, ...]:\n    \"\"\"Read team-logo ownership from the rendered Offstage map tabs.\"\"\"",
+          "count": 1
+        },
+        {
+          "old": "    result = veto_from_dom_payload(payload, team_a, team_b, best_of)",
+          "new": "    result = veto_from_dom_payload(\n        payload, team_a, team_b, best_of, text_veto=text_veto\n    )",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "c29966c167c3e65479a3ef21313575083e9f8f8c2dd667386d94348d83de48f5",
+      "after_sha256": "1bc2d148a0ea679ee4cc9aa13ff184aaff40c47f698e4054e3cf3624e7b4d2f2",
+      "replacements": [
+        {
+          "old": "                dom_veto = extract_veto_from_scoreboard_dom(\n                    page, record.team_a, record.team_b, record.best_of, debug=progress\n                )",
+          "new": "                dom_veto = extract_veto_from_scoreboard_dom(\n                    page, record.team_a, record.team_b, record.best_of,\n                    text_veto=record.veto, debug=progress\n                )",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
