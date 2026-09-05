@@ -1,0 +1,50 @@
+{
+  "from": "0.22.8",
+  "version": "0.22.9",
+  "files": [
+    {
+      "path": "tests/test_offstage_browser_timezone_patch.py",
+      "sha256": "65dd02e9db6346db56f60d523d4fe412b399b6e44f0dd78804cc0d133d71acb5",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.9/files/tests/test_offstage_browser_timezone_patch.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "3d63b5eca524d7a3027eef67d5d3817ab8e3ac8242bcd706de1c6b6f54540c26",
+      "after_sha256": "84f3dbe4808fa77c832443af80a5d4fabca9cf07246d0f47cac9a9e7a943405e",
+      "replacements": [
+        {"old": "0.22.8", "new": "0.22.9", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "bdecf003df1c29c0cffc7402b9d63df7ba8ac039258e866390cd97e92ee569fb",
+      "after_sha256": "1ad2e7f352d697ea72475edc4eafb72aa1752c699fc8dda0bfa5a53d272400eb",
+      "replacements": [
+        {"old": "version = \"0.22.8\"", "new": "version = \"0.22.9\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "10ecac3e87edb82da86d6b42f8e5ddacfd94d461468fc6ad9956332d69f02ee2",
+      "after_sha256": "f69268af115ce4fe4636827901fdf0d8d60ed5156758a68af8287682e0197e04",
+      "replacements": [
+        {"old": "__version__ = \"0.22.8\"", "new": "__version__ = \"0.22.9\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "ab47ec96cb890fdc2bb9335b13fc595dbf1651b32c2992b276989a23bcdd7505",
+      "after_sha256": "02ac6a25273799e6f74bfeba9731e3e74e1057a49358c9ca5c61b9bdeb877adc",
+      "replacements": [
+        {
+          "old": "            page = browser.new_page(\n                locale=\"ru-RU\",\n                user_agent=(\n",
+          "new": "            page = browser.new_page(\n                locale=\"ru-RU\",\n                timezone_id=\"Europe/Moscow\",\n                user_agent=(\n",
+          "count": 3
+        }
+      ]
+    }
+  ]
+}
