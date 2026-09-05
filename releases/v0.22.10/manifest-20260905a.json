@@ -1,0 +1,65 @@
+{
+  "from": "0.22.9",
+  "version": "0.22.10",
+  "files": [
+    {
+      "path": "src/cs2_value/offstage_dom_veto.py",
+      "sha256": "26832a0a338fe9d8f5cc01bcc6285d29d1a6cdc40a140f060aad969c5328d84e",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.10/files/src/cs2_value/offstage_dom_veto.py"
+    },
+    {
+      "path": "tests/test_offstage_dom_veto.py",
+      "sha256": "0e79b139505dd64fdb636e4441c7faeb568be121b27686e427b8520f1d21c1a4",
+      "url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.10/files/tests/test_offstage_dom_veto.py"
+    }
+  ],
+  "delete": [],
+  "patches": [
+    {
+      "path": "VERSION.txt",
+      "before_sha256": "84f3dbe4808fa77c832443af80a5d4fabca9cf07246d0f47cac9a9e7a943405e",
+      "after_sha256": "5aaf485a9cee2780abbc59b1b14922df31ba20239a592d33612389de61111aea",
+      "replacements": [
+        {"old": "0.22.9", "new": "0.22.10", "count": 1}
+      ]
+    },
+    {
+      "path": "pyproject.toml",
+      "before_sha256": "1ad2e7f352d697ea72475edc4eafb72aa1752c699fc8dda0bfa5a53d272400eb",
+      "after_sha256": "69a3f4961a681f196ea32b1c53546c0b91d1afb54b8d91edf5e64e6f4cfbdd12",
+      "replacements": [
+        {"old": "version = \"0.22.9\"", "new": "version = \"0.22.10\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/__init__.py",
+      "before_sha256": "f69268af115ce4fe4636827901fdf0d8d60ed5156758a68af8287682e0197e04",
+      "after_sha256": "f377f73f1c61edb6e1ad5beec373f68a0fa0255f30563fdfd534706dca8008c2",
+      "replacements": [
+        {"old": "__version__ = \"0.22.9\"", "new": "__version__ = \"0.22.10\"", "count": 1}
+      ]
+    },
+    {
+      "path": "src/cs2_value/offstage_browser.py",
+      "before_sha256": "02ac6a25273799e6f74bfeba9731e3e74e1057a49358c9ca5c61b9bdeb877adc",
+      "after_sha256": "165817e47dea1239d73f7b38632f437257a0048689240337d6a04700df7d1119",
+      "replacements": [
+        {
+          "old": "from __future__ import annotations\n\nimport re\n",
+          "new": "from __future__ import annotations\n\nfrom dataclasses import replace\nimport re\n",
+          "count": 1
+        },
+        {
+          "old": "from .sources.offstage import OffstageAdapter\n",
+          "new": "from .offstage_dom_veto import extract_veto_from_scoreboard_dom\nfrom .sources.offstage import OffstageAdapter\n",
+          "count": 1
+        },
+        {
+          "old": "            record = OffstageAdapter.parse_visible_text(text, url)\n            if progress:\n                start = record.played_at.isoformat() if record.played_at is not None else \"не найдено\"\n                progress(f\"Отрисованная карточка Offstage: начало {start}\")\n            return record\n",
+          "new": "            record = OffstageAdapter.parse_visible_text(text, url)\n            try:\n                dom_veto = extract_veto_from_scoreboard_dom(\n                    page, record.team_a, record.team_b, record.best_of\n                )\n            except Exception:\n                dom_veto = ()\n            if dom_veto and not record.veto:\n                record = replace(record, veto=dom_veto)\n                if progress:\n                    progress(\n                        \"DOM scoreboard Offstage: \"\n                        + \", \".join(\n                            f\"{action.map_name}={action.action}\"\n                            + (f\"({action.team_name})\" if action.team_name else \"\")\n                            for action in dom_veto\n                        )\n                    )\n            if progress:\n                start = record.played_at.isoformat() if record.played_at is not None else \"не найдено\"\n                progress(f\"Отрисованная карточка Offstage: начало {start}\")\n            return record\n",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
