@@ -1,8 +1,5 @@
 {
-  "version": "0.22.4",
-  "channel": "source-tree",
-  "app_path": "app",
-  "repo": "slavagostev2-dot/CS2-Value",
-  "branch": "main",
-  "required": false
+  "schema": 1,
+  "latest_version": "0.22.4",
+  "releases": []
 }
