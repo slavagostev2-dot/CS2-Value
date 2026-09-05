@@ -74,6 +74,7 @@ def build_map_feature_rows_impl(
         pre_general_rating_b = b.rating
         best_of = int(head["best_of"]) if head["best_of"] is not None else None
 
+        # All target-map rows see exactly the same pre-series state.
         for map_row in group:
             map_name = canonical_key(map_row["map_name"])
             if not map_name:
@@ -106,6 +107,7 @@ def build_map_feature_rows_impl(
                 )
             )
 
+        # Update map states only after every row for this series has been emitted.
         for map_row in group:
             map_name = canonical_key(map_row["map_name"])
             if not map_name:
@@ -119,6 +121,8 @@ def build_map_feature_rows_impl(
             a.map_ratings[map_name] = map_ra + map_k_factor * (actual_a - map_expected_a)
             b.map_ratings[map_name] = map_rb + map_k_factor * (actual_b - (1.0 - map_expected_a))
 
+            # Residual against general pre-series strength captures performance on
+            # this map after accounting for opponent quality.
             general_expected_a = expected_score(pre_general_rating_a, pre_general_rating_b, elo_scale)
             _map_deque(a.map_results, map_name).append(actual_a)
             _map_deque(b.map_results, map_name).append(actual_b)
@@ -187,7 +191,7 @@ def backtest_map_model(
         from sklearn.linear_model import LogisticRegression
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import StandardScaler
-    except ImportError as exc:
+    except ImportError as exc:  # pragma: no cover
         raise RuntimeError('Install model dependencies: pip install -e ".[model]"') from exc
 
     rows = build_map_feature_rows_impl(db_path)
@@ -201,36 +205,55 @@ def backtest_map_model(
     for group in groups:
         if len(history) >= min_train_maps and len({row.actual_a for row in history}) >= 2:
             if model is None or matches_since_fit >= retrain_every_matches:
-                x_train = np.asarray([[row.features[name] for name in names] for row in history], dtype=float)
+                x_train = np.asarray(
+                    [[row.features[name] for name in names] for row in history],
+                    dtype=float,
+                )
                 y_train = np.asarray([row.actual_a for row in history], dtype=int)
-                model = Pipeline([
-                    ("scale", StandardScaler()),
-                    ("logit", LogisticRegression(C=c, max_iter=2000, solver="lbfgs", random_state=42)),
-                ])
+                model = Pipeline(
+                    [
+                        ("scale", StandardScaler()),
+                        (
+                            "logit",
+                            LogisticRegression(
+                                C=c,
+                                max_iter=2000,
+                                solver="lbfgs",
+                                random_state=42,
+                            ),
+                        ),
+                    ]
+                )
                 model.fit(x_train, y_train)
                 matches_since_fit = 0
 
-            x_group = np.asarray([[row.features[name] for name in names] for row in group], dtype=float)
+            x_group = np.asarray(
+                [[row.features[name] for name in names] for row in group],
+                dtype=float,
+            )
             probabilities = model.predict_proba(x_group)[:, 1]
             train_size = len(history)
             for row, probability in zip(group, probabilities):
-                predictions.append(MapPrediction(
-                    map_id=row.map_id,
-                    match_id=row.match_id,
-                    played_at=row.played_at,
-                    team_a=row.team_a,
-                    team_b=row.team_b,
-                    map_name=row.map_name,
-                    map_order=row.map_order,
-                    actual_a=row.actual_a,
-                    probability_a=float(probability),
-                    general_elo_probability_a=row.general_elo_probability_a,
-                    map_elo_probability_a=row.map_elo_probability_a,
-                    train_maps=train_size,
-                    same_map_history_a=row.same_map_history_a,
-                    same_map_history_b=row.same_map_history_b,
-                ))
+                predictions.append(
+                    MapPrediction(
+                        map_id=row.map_id,
+                        match_id=row.match_id,
+                        played_at=row.played_at,
+                        team_a=row.team_a,
+                        team_b=row.team_b,
+                        map_name=row.map_name,
+                        map_order=row.map_order,
+                        actual_a=row.actual_a,
+                        probability_a=float(probability),
+                        general_elo_probability_a=row.general_elo_probability_a,
+                        map_elo_probability_a=row.map_elo_probability_a,
+                        train_maps=train_size,
+                        same_map_history_a=row.same_map_history_a,
+                        same_map_history_b=row.same_map_history_b,
+                    )
+                )
             matches_since_fit += 1
+
         history.extend(group)
 
     actuals = [prediction.actual_a for prediction in predictions]
@@ -241,6 +264,10 @@ def backtest_map_model(
         feature_names=names,
         predictions=predictions,
         raw_metrics=probability_metrics([prediction.probability_a for prediction in predictions], actuals),
-        general_elo_metrics=probability_metrics([prediction.general_elo_probability_a for prediction in predictions], actuals),
-        map_elo_metrics=probability_metrics([prediction.map_elo_probability_a for prediction in predictions], actuals),
+        general_elo_metrics=probability_metrics(
+            [prediction.general_elo_probability_a for prediction in predictions], actuals
+        ),
+        map_elo_metrics=probability_metrics(
+            [prediction.map_elo_probability_a for prediction in predictions], actuals
+        ),
     )
