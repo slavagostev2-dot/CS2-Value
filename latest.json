@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "latest_version": "0.22.9",
+  "latest_version": "0.22.10",
   "releases": [
     {
       "from": "0.22.4",
@@ -26,6 +26,11 @@
       "from": "0.22.8",
       "version": "0.22.9",
       "manifest_url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.9/manifest-20260905a.json"
+    },
+    {
+      "from": "0.22.9",
+      "version": "0.22.10",
+      "manifest_url": "https://raw.githubusercontent.com/slavagostev2-dot/CS2-Value/main/releases/v0.22.10/manifest-20260905a.json"
     }
   ]
 }
