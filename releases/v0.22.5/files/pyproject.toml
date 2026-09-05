@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cs2-value"
+version = "0.22.5"
+description = "Local CS2 probability and betting value research engine"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+model = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "scikit-learn>=1.5",
+  "joblib>=1.4",
+]
+dev = ["pytest>=8.2"]
+browser = ["playwright>=1.46"]
+
+[project.scripts]
+cs2-value = "cs2_value.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--basetemp=.pytest_tmp"
+pythonpath = ["src"]
+testpaths = ["tests"]
